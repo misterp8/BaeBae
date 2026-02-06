@@ -121,6 +121,37 @@
             100% { opacity: 1; transform: scale(1.02); }
         }
 
+        /* === 自訂錯誤提示框 (Toast) === */
+        #custom-toast {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(50, 10, 10, 0.95);
+            border: 2px solid #d94e41;
+            padding: 20px 30px;
+            border-radius: 12px;
+            z-index: 100;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            width: 80%;
+            max-width: 280px;
+        }
+        .toast-title {
+            color: #d94e41;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .toast-msg {
+            color: #fff;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
         /* === 按鈕樣式共用 === */
         .icon-btn {
             position: absolute;
@@ -254,9 +285,24 @@
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 13px; color: #aaa; margin-bottom: 5px; }
 
-        input[type="date"], input[type="text"] {
-            width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #555; color: white; border-radius: 8px; box-sizing: border-box; font-size: 16px;
+        input[type="tel"], 
+        input[type="text"], 
+        input[type="date"] {
+            width: 100%; 
+            padding: 12px; 
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #555; 
+            color: white; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+        input:focus {
+            outline: none;
+            border-color: #d94e41;
         }
 
         .toggle-group {
@@ -313,6 +359,11 @@
 <body>
     <video id="camera-feed" autoplay playsinline muted></video>
 
+    <div id="custom-toast">
+        <div class="toast-title" id="toast-title">提示</div>
+        <div class="toast-msg" id="toast-msg">訊息內容</div>
+    </div>
+
     <div id="loading-overlay">
         <div class="loading-text">誠心祈求</div>
         <div class="loading-spinner"></div>
@@ -345,8 +396,8 @@
             </div>
 
             <div class="input-group">
-                <label>你的出生日期</label>
-                <input type="date" id="input-bday">
+                <label>你的出生日期 (西元年月日)</label>
+                <input type="tel" id="input-bday" placeholder="例如：20080825" maxlength="8">
             </div>
 
             <div class="input-group">
@@ -405,6 +456,9 @@
         let isCameraActive = false;
         let cameraStream = null;
         let currentBgColor = new THREE.Color(0x1a0505); 
+
+        // 提示框變數
+        let toastTimer = null;
 
         class FateEngine {
             constructor() { this.PHI = 1.6180339887; }
@@ -632,7 +686,7 @@
                 userImagePlane.position.z = -7.0 + (h / 2);
                 userImagePlane.visible = true; document.getElementById('file-label').innerText = "圖片已載入";
                 
-                // 如果相機已經開啟，載入新圖片時也要確保是透明的
+                // 如果相機已經開啟，載入新圖片時也要確保是半透明的
                 if(isCameraActive) {
                     userImagePlane.material.opacity = 0.3;
                 }
@@ -725,13 +779,13 @@
                     // 背景透明
                     scene.background = null;
 
-                    // 地板半透明 (30%)
+                    // 地板改成 0 完全隱形
                     if(floorMesh) {
                         floorMesh.material.transparent = true;
                         floorMesh.material.opacity = 0; 
                         floorMesh.material.needsUpdate = true;
                     }
-                    // 使用者圖片半透明 (30%) - 修正點
+                    // 使用者圖片半透明 (30%)
                     if(userImagePlane) {
                         userImagePlane.material.opacity = 0.3;
                         userImagePlane.material.needsUpdate = true;
@@ -743,10 +797,24 @@
                     }
 
                 } catch (err) {
-                    alert("無法開啟相機權限：" + err.message);
+                    showToast("無法開啟相機", "請檢查權限或重新整理");
                     console.error(err);
                 }
             }
+        }
+
+        // === 新增：自訂提示框函式 ===
+        function showToast(title, msg) {
+            const toast = document.getElementById('custom-toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerHTML = msg; // 允許 HTML 換行
+            
+            toast.style.opacity = 1;
+            
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.style.opacity = 0;
+            }, 2500); // 2.5秒後消失
         }
 
         function initUI() {
@@ -768,7 +836,20 @@
 
             document.getElementById('btn-save').addEventListener('click', () => {
                 initAudio(); 
-                userData.bday = document.getElementById('input-bday').value;
+                
+                // === 檢查生日輸入格式 ===
+                const bdayInput = document.getElementById('input-bday');
+                const bdayVal = bdayInput.value.trim();
+
+                // 只有當使用者「有輸入」且「格式錯誤」時才警告
+                if (bdayVal && !/^\d{8}$/.test(bdayVal)) {
+                    // 使用自訂 Toast 取代 alert
+                    showToast("日期格式錯誤", "請輸入 8 位數字<br>例如：20080825");
+                    return; // 阻止繼續執行
+                }
+                
+                userData.bday = bdayVal; 
+                
                 updateFloorText(document.getElementById('input-floor-text').value);
                 if (fi.files && fi.files[0]) { const r = new FileReader(); r.onload = (e) => updateUserImage(e.target.result); r.readAsDataURL(fi.files[0]); }
 
