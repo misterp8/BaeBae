@@ -1,6 +1,6 @@
 {
-  "name": "本命杯杯 - 追星天機運算",
-  "short_name": "本命杯杯 BaeBae",
+  "name": "本命杯杯 - BaeBae",
+  "short_name": "本命杯杯",
   "description": "搭載三元九運混沌引擎，結合 GPS 與生辰的真實物理擲筊系統，為你的本命注入靈力。",
   "start_url": "./index.html",
   "display": "standalone",
@@ -21,4 +21,5 @@
       "purpose": "any maskable"
     }
   ]
+
 }
