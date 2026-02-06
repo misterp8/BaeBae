@@ -151,9 +151,8 @@
             top: max(20px, env(safe-area-inset-top));
         }
 
-        /* Camera Button (新功能) */
+        /* Camera Button */
         #btn-camera {
-            /* 位於設定按鈕下方，保留間距 */
             top: calc(max(20px, env(safe-area-inset-top)) + 60px);
         }
 
@@ -387,7 +386,7 @@
         let currentState = GAME_STATE.READY;
         let scene, camera, renderer, world, eventQueue;
         let moonLeft, moonRight, meshLeft, meshRight;
-        let floorTextPlane, userImagePlane, fireLight, floorMesh; // 新增 floorMesh 參考
+        let floorTextPlane, userImagePlane, fireLight, floorMesh; 
         let userData = { bday: "", floorText: "", useGPS: false };
         let audioCtx = null, safetyTimer = null, dampingTimer = null, physicsReady = false;
         let localUpAxis = new THREE.Vector3(0, 1, 0);
@@ -405,7 +404,7 @@
         // 相機變數
         let isCameraActive = false;
         let cameraStream = null;
-        let currentBgColor = new THREE.Color(0x1a0505); // 記錄當前背景顏色
+        let currentBgColor = new THREE.Color(0x1a0505); 
 
         class FateEngine {
             constructor() { this.PHI = 1.6180339887; }
@@ -551,14 +550,12 @@
 
         function initScene() {
             scene = new THREE.Scene();
-            // 注意：為了支援相機透視，renderer 開啟 alpha: true
             scene.background = currentBgColor; 
             scene.fog = new THREE.Fog(0x1a0505, 10, 50);
 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
             camera.position.set(0, 16, 0); camera.lookAt(0, 2, 0);
             
-            // 重要：alpha: true 允許 Canvas 透明，這樣才看得到背後的 video
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight); 
             renderer.shadowMap.enabled = true;
@@ -571,7 +568,6 @@
             fireLight = new THREE.PointLight(0xff7733, 8.0, 60);
             fireLight.position.set(0, 2, 0); scene.add(fireLight);
 
-            // 地板 (存到變數以便控制透明度)
             const floorMaterial = new THREE.MeshStandardMaterial({ 
                 color: 0x220a0a, 
                 roughness: 0.5, 
@@ -626,7 +622,6 @@
         function updateUserImage(url) {
             if (!url) { 
                 userImagePlane.visible = false; 
-                // 如果移除圖片，恢復預設背景色
                 if(!isCameraActive) scene.background = new THREE.Color(0x1a0505);
                 currentBgColor = new THREE.Color(0x1a0505);
                 return; 
@@ -637,9 +632,10 @@
                 userImagePlane.position.z = -7.0 + (h / 2);
                 userImagePlane.visible = true; document.getElementById('file-label').innerText = "圖片已載入";
                 
-                // 背景換成該圖片 (如果不開天眼)
-                // 但為了保持介面一致，我們這裡只把圖放在地上，背景保持黑 (或者你可以選擇把這張圖設為 scene.background)
-                // 這裡保持原設計：只顯示在地板上的 Plane，背景維持黑色
+                // 如果相機已經開啟，載入新圖片時也要確保是透明的
+                if(isCameraActive) {
+                    userImagePlane.material.opacity = 0.3;
+                }
             });
         }
 
@@ -684,12 +680,11 @@
             g.gain.setValueAtTime(Math.min(v * 0.5, 1.0), t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.15); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.15);
         }
 
-        // === 新增：相機控制函式 ===
         async function toggleCamera() {
             const videoElement = document.getElementById('camera-feed');
             
             if (isCameraActive) {
-                // 關閉相機
+                // === 關閉相機 ===
                 isCameraActive = false;
                 if (cameraStream) {
                     cameraStream.getTracks().forEach(track => track.stop());
@@ -706,9 +701,19 @@
                     floorMesh.material.opacity = 1.0;
                     floorMesh.material.needsUpdate = true;
                 }
+                // 還原使用者圖片不透明度
+                if(userImagePlane) {
+                    userImagePlane.material.opacity = 1.0;
+                    userImagePlane.material.needsUpdate = true;
+                }
+                // 還原文字不透明度
+                if(floorTextPlane) {
+                    floorTextPlane.material.opacity = 0.8;
+                    floorTextPlane.material.needsUpdate = true;
+                }
 
             } else {
-                // 開啟相機
+                // === 開啟相機 ===
                 try {
                     cameraStream = await navigator.mediaDevices.getUserMedia({ 
                         video: { facingMode: 'environment' } 
@@ -717,14 +722,24 @@
                     videoElement.style.display = 'block';
                     isCameraActive = true;
 
-                    // 將 Three.js 背景設為透明，讓底層 Video 顯示出來
+                    // 背景透明
                     scene.background = null;
 
-                    // 將地板設為半透明，讓使用者可以看到桌上的東西
+                    // 地板半透明 (30%)
                     if(floorMesh) {
                         floorMesh.material.transparent = true;
-                        floorMesh.material.opacity = 0.3; // 30% 不透明度
+                        floorMesh.material.opacity = 0; 
                         floorMesh.material.needsUpdate = true;
+                    }
+                    // 使用者圖片半透明 (30%) - 修正點
+                    if(userImagePlane) {
+                        userImagePlane.material.opacity = 0.3;
+                        userImagePlane.material.needsUpdate = true;
+                    }
+                    // 文字半透明 (50%)
+                    if(floorTextPlane) {
+                        floorTextPlane.material.opacity = 0.5;
+                        floorTextPlane.material.needsUpdate = true;
                     }
 
                 } catch (err) {
@@ -741,9 +756,8 @@
                 document.getElementById('settings-modal').style.display = 'none';
             });
 
-            // 天眼按鈕監聽
             document.getElementById('btn-camera').addEventListener('click', () => {
-                initAudio(); // 點擊按鈕順便解鎖音效
+                initAudio();
                 toggleCamera();
             });
 
