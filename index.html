@@ -113,7 +113,7 @@
             }
         }
 
-        /* Settings Button [Fixed Centering] */
+        /* Settings Button */
         #btn-settings {
             position: absolute;
             top: max(20px, env(safe-area-inset-top));
@@ -129,12 +129,10 @@
             cursor: pointer;
             pointer-events: auto;
             z-index: 20;
-            /* Flexbox for perfect centering */
             display: flex;
             justify-content: center;
             align-items: center;
             padding-bottom: 2px;
-            /* Visual correction */
         }
 
         /* Result Display */
@@ -168,7 +166,7 @@
 
         #instruction {
             position: absolute;
-            bottom: 8%;
+            bottom: max(8%, env(safe-area-inset-bottom) + 20px);
             left: 0;
             width: 100%;
             text-align: center;
@@ -211,6 +209,8 @@
         }
 
         .modal-content {
+            /* 加上 position: relative 讓 X 按鈕可以定位 */
+            position: relative; 
             background: linear-gradient(135deg, #2a0a0a, #1a0505);
             border: 1px solid #d94e41;
             padding: 25px;
@@ -222,6 +222,24 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
             max-height: 80vh;
             overflow-y: auto;
+        }
+
+        /* Close Button (X) */
+        #btn-close-settings {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            color: #aaa;
+            cursor: pointer;
+            z-index: 50;
+            line-height: 1;
+            font-weight: bold;
+            padding: 5px;
+        }
+        #btn-close-settings:active {
+            color: #fff;
+            transform: scale(0.9);
         }
 
         .input-group {
@@ -388,6 +406,8 @@
 
     <div id="settings-modal">
         <div class="modal-content">
+            <div id="btn-close-settings">×</div>
+
             <h3 style="margin-top:0; border-bottom:1px solid #d94e41; padding-bottom:10px; text-align:center;">本命杯杯
                 BaeBae</h3>
 
@@ -442,7 +462,14 @@
         let userData = { bday: "", floorText: "", useGPS: false };
         let audioCtx = null, safetyTimer = null, dampingTimer = null, physicsReady = false;
         let localUpAxis = new THREE.Vector3(0, 1, 0);
-        let stableFrames = 0; const REQUIRED_STABLE_FRAMES = 60;
+        let stableFrames = 0; 
+        const REQUIRED_STABLE_FRAMES = 50; 
+        
+        // 時間同步變數
+        const clock = new THREE.Clock(); 
+        let physicsAccumulator = 0;
+        const PHYSICS_STEP = 1 / 60; 
+        const SIMULATION_SPEED = 2.0; 
 
         let userLocation = { lat: 25.03, lng: 121.56 };
         let fateEngine;
@@ -532,8 +559,8 @@
                 world = new RAPIER.World({ x: 0.0, y: -9.81, z: 0.0 });
                 eventQueue = new RAPIER.EventQueue(true);
 
-                let floorBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
-                let floorCol = RAPIER.ColliderDesc.cuboid(25, 0.1, 25).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
+                let floorBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -5, 0));
+                let floorCol = RAPIER.ColliderDesc.cuboid(25, 5, 25).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
                 world.createCollider(floorCol, floorBody);
 
                 createWalls();
@@ -654,7 +681,7 @@
             const createBlock = (config, isLeft) => {
                 const mesh = model.clone(); mesh.material = ancientMaterial; scene.add(mesh); if (isLeft) meshLeft = mesh; else meshRight = mesh;
                 if (isLeft) { const t = new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(config.rot.x), THREE.MathUtils.degToRad(config.rot.y), THREE.MathUtils.degToRad(config.rot.z))); localUpAxis = new THREE.Vector3(0, 1, 0).applyQuaternion(t.clone().invert()); }
-                const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(config.pos.x, config.pos.y, config.pos.z).setLinearDamping(0.2).setAngularDamping(0.2));
+                const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(config.pos.x, config.pos.y, config.pos.z).setLinearDamping(0.2).setAngularDamping(0.2).setCcdEnabled(true));
                 world.createCollider(RAPIER.ColliderDesc.convexHull(new Float32Array(vertices)).setMass(0.5).setRestitution(0.3).setFriction(0.65).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS), body);
                 if (isLeft) moonLeft = body; else moonRight = body;
             };
@@ -690,7 +717,21 @@
             floorTextPlane.material.map = new THREE.CanvasTexture(canvas); floorTextPlane.material.needsUpdate = true; floorTextPlane.visible = true;
         }
 
-        function initAudio() { if (audioCtx) return; const AC = window.AudioContext || window.webkitAudioContext; audioCtx = new AC(); const b = audioCtx.createBuffer(1, 1, 22050); const s = audioCtx.createBufferSource(); s.buffer = b; s.connect(audioCtx.destination); s.start(0); }
+        function initAudio() {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!audioCtx) {
+                audioCtx = new AC();
+                const b = audioCtx.createBuffer(1, 1, 22050);
+                const s = audioCtx.createBufferSource();
+                s.buffer = b;
+                s.connect(audioCtx.destination);
+                s.start(0);
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
         function playWoodSound(v) {
             if (!audioCtx || v < 0.2) return;
             const t = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
@@ -700,12 +741,19 @@
 
         function initUI() {
             document.getElementById('btn-settings').addEventListener('click', () => document.getElementById('settings-modal').style.display = 'flex');
+            
+            // 新增：關閉按鈕監聽
+            document.getElementById('btn-close-settings').addEventListener('click', () => {
+                document.getElementById('settings-modal').style.display = 'none';
+            });
+
             const fi = document.getElementById('input-bg-file');
             fi.addEventListener('change', (e) => { if (e.target.files.length > 0) document.getElementById('file-label').innerText = "已選擇: " + e.target.files[0].name; });
 
             document.getElementById('input-gps').addEventListener('change', (e) => { toggleGPS(e.target.checked); });
 
             document.getElementById('btn-save').addEventListener('click', () => {
+                initAudio(); 
                 userData.bday = document.getElementById('input-bday').value;
                 updateFloorText(document.getElementById('input-floor-text').value);
                 if (fi.files && fi.files[0]) { const r = new FileReader(); r.onload = (e) => updateUserImage(e.target.result); r.readAsDataURL(fi.files[0]); }
@@ -744,7 +792,10 @@
 
         function startToss() {
             if (!moonLeft || !moonRight) return; currentState = GAME_STATE.TOSSING; document.getElementById('instruction').style.opacity = 0;
-            if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+            
+            if (navigator && typeof navigator.vibrate === 'function') {
+                try { navigator.vibrate([30, 50, 30]); } catch(e){}
+            }
 
             const params = fateEngine.calculatePhysicsParameters(userData.bday, userLocation.lat, userLocation.lng);
             const frictionEffect = params.friction * 0.3;
@@ -763,26 +814,66 @@
 
             if (dampingTimer) clearTimeout(dampingTimer);
             dampingTimer = setTimeout(() => { if (currentState === GAME_STATE.TOSSING) { moonLeft.setLinearDamping(5.0); moonRight.setLinearDamping(5.0); moonLeft.setAngularDamping(5.0); moonRight.setAngularDamping(5.0); } }, 2500);
+            
             if (safetyTimer) clearTimeout(safetyTimer);
-            safetyTimer = setTimeout(() => { if (currentState === GAME_STATE.TOSSING) showResult(); }, 6000);
+            safetyTimer = setTimeout(() => { 
+                if (currentState === GAME_STATE.TOSSING) { 
+                    showResult(); 
+                } 
+            }, 6000);
         }
 
         function animate() {
             requestAnimationFrame(animate);
+            
+            let deltaTime = clock.getDelta();
+            if (deltaTime > 0.1) deltaTime = 0.1;
+
             if (fireLight) fireLight.intensity = 8.0 + Math.sin(Date.now() * 0.003) * 1.0 + Math.sin(Date.now() * 0.008) * 0.5;
 
             if (world && physicsReady) {
-                world.step(eventQueue);
-                eventQueue.drainCollisionEvents((h1, h2, started) => { if (!started) return; if (moonLeft) { const v = moonLeft.linvel(); if (Math.sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2) > 0.3) playWoodSound(Math.sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)); } });
-                const sync = (body, mesh) => { if (body && mesh) { const t = body.translation(); const r = body.rotation(); mesh.position.set(t.x, t.y, t.z); mesh.quaternion.set(r.x, r.y, r.z, r.w); } };
-                sync(moonLeft, meshLeft); sync(moonRight, meshRight);
+                physicsAccumulator += deltaTime * SIMULATION_SPEED;
 
-                if (currentState === GAME_STATE.TOSSING && moonLeft) {
-                    const vL = moonLeft.linvel(); const vR = moonRight.linvel();
-                    const energy = vL.x ** 2 + vL.y ** 2 + vL.z ** 2 + vR.x ** 2 + vR.y ** 2 + vR.z ** 2;
-                    if (energy < 0.1) stableFrames++; else stableFrames = 0;
-                    if (stableFrames > REQUIRED_STABLE_FRAMES) showResult();
+                while (physicsAccumulator >= PHYSICS_STEP) {
+                    world.step(eventQueue);
+                    physicsAccumulator -= PHYSICS_STEP;
+
+                    eventQueue.drainCollisionEvents((h1, h2, started) => { 
+                        if (!started) return; 
+                        
+                        let speed = 0;
+                        if (moonLeft) {
+                            const v = moonLeft.linvel();
+                            speed = Math.sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2);
+                        }
+
+                        if (speed > 0.3) {
+                             playWoodSound(speed);
+                             if (speed > 1.5 && navigator && typeof navigator.vibrate === 'function') {
+                                 try { navigator.vibrate(15); } catch(e){}
+                             }
+                        }
+                    });
+
+                    if (currentState === GAME_STATE.TOSSING && moonLeft) {
+                        const vL = moonLeft.linvel(); const vR = moonRight.linvel();
+                        const energy = vL.x ** 2 + vL.y ** 2 + vL.z ** 2 + vR.x ** 2 + vR.y ** 2 + vR.z ** 2;
+                        
+                        if (energy < 0.5) stableFrames++; else stableFrames = 0;
+                        
+                        if (stableFrames > REQUIRED_STABLE_FRAMES) showResult();
+                    }
                 }
+
+                const sync = (body, mesh) => { 
+                    if (body && mesh) { 
+                        const t = body.translation(); 
+                        const r = body.rotation(); 
+                        mesh.position.set(t.x, t.y, t.z); 
+                        mesh.quaternion.set(r.x, r.y, r.z, r.w); 
+                    } 
+                };
+                sync(moonLeft, meshLeft); sync(moonRight, meshRight);
             }
             renderer.render(scene, camera);
         }
@@ -790,16 +881,25 @@
         function showResult() {
             if (safetyTimer) clearTimeout(safetyTimer); if (dampingTimer) clearTimeout(dampingTimer);
             currentState = GAME_STATE.RESULT;
-            const getSide = (mesh) => { const y = localUpAxis.clone().applyQuaternion(mesh.quaternion).y; if (y > 0.5) return 1; if (y < -0.5) return 0; return 2; };
+            
+            const getSide = (mesh) => { 
+                if(!mesh) return 2;
+                const y = localUpAxis.clone().applyQuaternion(mesh.quaternion).y; 
+                if (y > 0.5) return 1; if (y < -0.5) return 0; return 2; 
+            };
+            
             const sL = getSide(meshLeft); const sR = getSide(meshRight);
             let title = "", desc = "", color = "";
             if (sL === 2 || sR === 2) { title = "立筊"; desc = "【太鬼了】系統異常，偵測到稀有變數！"; color = "#ff00ff"; }
-            else if (sL === 1 && sR === 1) { title = "笑筊"; desc = "【要確欸？】是不是沒想清楚？再一次。"; color = "#e0e0e0"; } /* 亮灰色 */
+            else if (sL === 1 && sR === 1) { title = "笑筊"; desc = "【要確欸？】是不是沒想清楚？再一次。"; color = "#e0e0e0"; }
             else if (sL === 0 && sR === 0) { title = "陰筊"; desc = "【先不要】感覺不太對，頻率沒對上。"; color = "#aaaaaa"; }
             else { title = "聖筊"; desc = "【歐氣爆發】不用懷疑，這波穩了！"; color = "#ff3333"; }
+            
             const rt = document.getElementById('res-text'); const rd = document.getElementById('res-desc');
-            rt.innerText = title; rt.style.color = color; rd.innerText = desc;
-            document.getElementById('result-display').style.opacity = 1; document.getElementById('instruction').innerText = "點擊任意處重新擲筊"; document.getElementById('instruction').style.opacity = 1;
+            if(rt && rd) {
+                rt.innerText = title; rt.style.color = color; rd.innerText = desc;
+                document.getElementById('result-display').style.opacity = 1; document.getElementById('instruction').innerText = "點擊任意處重新擲筊"; document.getElementById('instruction').style.opacity = 1;
+            }
         }
         init();
     </script>
