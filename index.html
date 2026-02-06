@@ -30,15 +30,15 @@
             height: 100%;
             object-fit: cover;
             z-index: 0;
-            display: none; /* 預設隱藏 */
-            transform: scaleX(1); /* 後鏡頭不需要鏡像翻轉 */
+            display: none;
+            transform: scaleX(1);
         }
 
         #canvas-container {
             position: absolute;
             top: 0;
             left: 0;
-            z-index: 5; /* 在相機之上 */
+            z-index: 5;
         }
 
         #ui-layer {
@@ -49,6 +49,62 @@
             height: 100%;
             pointer-events: none;
             z-index: 10;
+        }
+
+        /* === 新增：三聖筊特效大字 === */
+        #streak-overlay {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            font-size: 80px;
+            font-weight: 900;
+            color: #ffd700; /* 金色 */
+            text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000; /* 紅色光暈 */
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            letter-spacing: 10px;
+            white-space: nowrap;
+        }
+        /* 顯示狀態 */
+        #streak-overlay.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* 連續聖杯指示燈 (左上角) */
+        #streak-container {
+            position: absolute;
+            top: max(20px, env(safe-area-inset-top));
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            display: none;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .streak-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #555;
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .streak-dot.active {
+            background-color: #ff0000;
+            border-color: #ffaaaa;
+            box-shadow: 0 0 15px #ff0000, 0 0 30px #ff3333;
+            transform: scale(1.2);
         }
 
         /* Loading */
@@ -121,7 +177,7 @@
             100% { opacity: 1; transform: scale(1.02); }
         }
 
-        /* === 自訂錯誤提示框 (Toast) === */
+        /* Toast */
         #custom-toast {
             position: absolute;
             top: 40%;
@@ -140,19 +196,10 @@
             width: 80%;
             max-width: 280px;
         }
-        .toast-title {
-            color: #d94e41;
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .toast-msg {
-            color: #fff;
-            font-size: 14px;
-            line-height: 1.5;
-        }
+        .toast-title { color: #d94e41; font-size: 20px; font-weight: bold; margin-bottom: 8px; }
+        .toast-msg { color: #fff; font-size: 14px; line-height: 1.5; }
 
-        /* === 按鈕樣式共用 === */
+        /* Icon Buttons */
         .icon-btn {
             position: absolute;
             right: 20px;
@@ -173,19 +220,10 @@
             padding-bottom: 2px;
             transition: background 0.3s;
         }
-        .icon-btn:active {
-            background: rgba(255, 215, 0, 0.2);
-        }
+        .icon-btn:active { background: rgba(255, 215, 0, 0.2); }
 
-        /* Settings Button */
-        #btn-settings {
-            top: max(20px, env(safe-area-inset-top));
-        }
-
-        /* Camera Button */
-        #btn-camera {
-            top: calc(max(20px, env(safe-area-inset-top)) + 60px);
-        }
+        #btn-settings { top: max(20px, env(safe-area-inset-top)); }
+        #btn-camera { top: calc(max(20px, env(safe-area-inset-top)) + 60px); }
 
         /* Result Display */
         #result-display {
@@ -231,12 +269,10 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 0.3; }
-            50% { opacity: 0.8; }
-            100% { opacity: 0.3; }
+            0% { opacity: 0.3; } 50% { opacity: 0.8; } 100% { opacity: 0.3; }
         }
 
-        /* Settings Modal */
+        /* Modal */
         #settings-modal {
             position: absolute;
             top: 0;
@@ -267,43 +303,23 @@
             overflow-y: auto;
         }
 
-        /* Close Button (X) */
         #btn-close-settings {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 28px;
-            color: #aaa;
-            cursor: pointer;
-            z-index: 50;
-            line-height: 1;
-            font-weight: bold;
-            padding: 5px;
+            position: absolute; top: 10px; right: 15px; font-size: 28px;
+            color: #aaa; cursor: pointer; z-index: 50; line-height: 1;
+            font-weight: bold; padding: 5px;
         }
         #btn-close-settings:active { color: #fff; transform: scale(0.9); }
 
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 13px; color: #aaa; margin-bottom: 5px; }
 
-        input[type="tel"], 
-        input[type="text"], 
-        input[type="date"] {
-            width: 100%; 
-            padding: 12px; 
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #555; 
-            color: white; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px;
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
+        input[type="tel"], input[type="text"], input[type="date"] {
+            width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #555; color: white; border-radius: 8px;
+            box-sizing: border-box; font-size: 16px;
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
         }
-        input:focus {
-            outline: none;
-            border-color: #d94e41;
-        }
+        input:focus { outline: none; border-color: #d94e41; }
 
         .toggle-group {
             display: flex; align-items: center; justify-content: space-between;
@@ -340,9 +356,7 @@
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
             animation: shine 3s infinite;
         }
-        @keyframes shine {
-            0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; }
-        }
+        @keyframes shine { 0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; } }
     </style>
 
     <script type="importmap">
@@ -364,6 +378,8 @@
         <div class="toast-msg" id="toast-msg">訊息內容</div>
     </div>
 
+    <div id="streak-overlay">三聖筊</div>
+
     <div id="loading-overlay">
         <div class="loading-text">誠心祈求</div>
         <div class="loading-spinner"></div>
@@ -375,6 +391,12 @@
 
     <div id="canvas-container"></div>
     <div id="ui-layer">
+        <div id="streak-container">
+            <div class="streak-dot" id="dot-1"></div>
+            <div class="streak-dot" id="dot-2"></div>
+            <div class="streak-dot" id="dot-3"></div>
+        </div>
+
         <div id="btn-settings" class="icon-btn">⚙</div>
         <div id="btn-camera" class="icon-btn">👁️</div>
 
@@ -391,13 +413,18 @@
             <h3 style="margin-top:0; border-bottom:1px solid #d94e41; padding-bottom:10px; text-align:center;">本命杯杯 BaeBae</h3>
 
             <div class="toggle-group">
+                <label for="input-streak-mode">開啟連續聖杯挑戰</label>
+                <input type="checkbox" id="input-streak-mode">
+            </div>
+
+            <div class="toggle-group">
                 <label for="input-gps">開啟靈氣定位 (GPS)</label>
                 <input type="checkbox" id="input-gps">
             </div>
 
             <div class="input-group">
                 <label>你的出生日期 (西元年月日)</label>
-                <input type="tel" id="input-bday" placeholder="例如：20080825" maxlength="8">
+                <input type="tel" id="input-bday" placeholder="例如：20040831" maxlength="8">
             </div>
 
             <div class="input-group">
@@ -438,7 +465,7 @@
         let scene, camera, renderer, world, eventQueue;
         let moonLeft, moonRight, meshLeft, meshRight;
         let floorTextPlane, userImagePlane, fireLight, floorMesh; 
-        let userData = { bday: "", floorText: "", useGPS: false };
+        let userData = { bday: "", floorText: "", useGPS: false, useStreak: false }; 
         let audioCtx = null, safetyTimer = null, dampingTimer = null, physicsReady = false;
         let localUpAxis = new THREE.Vector3(0, 1, 0);
         let stableFrames = 0; 
@@ -452,13 +479,14 @@
         let userLocation = { lat: 25.03, lng: 121.56 };
         let fateEngine;
 
-        // 相機變數
+        // 相機與其他變數
         let isCameraActive = false;
         let cameraStream = null;
         let currentBgColor = new THREE.Color(0x1a0505); 
-
-        // 提示框變數
         let toastTimer = null;
+
+        // 連續聖杯計數
+        let streakCount = 0;
 
         class FateEngine {
             constructor() { this.PHI = 1.6180339887; }
@@ -570,6 +598,28 @@
                     );
                 }
             }
+        }
+
+        function updateStreakDots() {
+            const container = document.getElementById('streak-container');
+            if (userData.useStreak) {
+                container.style.display = 'flex';
+                document.getElementById('dot-1').classList.toggle('active', streakCount >= 1);
+                document.getElementById('dot-2').classList.toggle('active', streakCount >= 2);
+                document.getElementById('dot-3').classList.toggle('active', streakCount >= 3);
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function showStreakOverlay() {
+            const overlay = document.getElementById('streak-overlay');
+            overlay.classList.add('show');
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                // 2秒後歸零燈號顯示 (變數已經歸零了)
+                updateStreakDots();
+            }, 2000);
         }
 
         function createWoodBumpMap() {
@@ -686,7 +736,6 @@
                 userImagePlane.position.z = -7.0 + (h / 2);
                 userImagePlane.visible = true; document.getElementById('file-label').innerText = "圖片已載入";
                 
-                // 如果相機已經開啟，載入新圖片時也要確保是半透明的
                 if(isCameraActive) {
                     userImagePlane.material.opacity = 0.3;
                 }
@@ -738,63 +787,30 @@
             const videoElement = document.getElementById('camera-feed');
             
             if (isCameraActive) {
-                // === 關閉相機 ===
                 isCameraActive = false;
                 if (cameraStream) {
                     cameraStream.getTracks().forEach(track => track.stop());
                     cameraStream = null;
                 }
                 videoElement.style.display = 'none';
-                
-                // 還原背景
                 scene.background = currentBgColor;
                 
-                // 還原地板不透明度
-                if(floorMesh) {
-                    floorMesh.material.transparent = false;
-                    floorMesh.material.opacity = 1.0;
-                    floorMesh.material.needsUpdate = true;
-                }
-                // 還原使用者圖片不透明度
-                if(userImagePlane) {
-                    userImagePlane.material.opacity = 1.0;
-                    userImagePlane.material.needsUpdate = true;
-                }
-                // 還原文字不透明度
-                if(floorTextPlane) {
-                    floorTextPlane.material.opacity = 0.8;
-                    floorTextPlane.material.needsUpdate = true;
-                }
+                if(floorMesh) { floorMesh.material.transparent = false; floorMesh.material.opacity = 1.0; floorMesh.material.needsUpdate = true; }
+                if(userImagePlane) { userImagePlane.material.opacity = 1.0; userImagePlane.material.needsUpdate = true; }
+                if(floorTextPlane) { floorTextPlane.material.opacity = 0.8; floorTextPlane.material.needsUpdate = true; }
 
             } else {
-                // === 開啟相機 ===
                 try {
-                    cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: 'environment' } 
-                    });
+                    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                     videoElement.srcObject = cameraStream;
                     videoElement.style.display = 'block';
                     isCameraActive = true;
 
-                    // 背景透明
                     scene.background = null;
 
-                    // 地板改成 0 完全隱形
-                    if(floorMesh) {
-                        floorMesh.material.transparent = true;
-                        floorMesh.material.opacity = 0; 
-                        floorMesh.material.needsUpdate = true;
-                    }
-                    // 使用者圖片半透明 (30%)
-                    if(userImagePlane) {
-                        userImagePlane.material.opacity = 0.3;
-                        userImagePlane.material.needsUpdate = true;
-                    }
-                    // 文字半透明 (50%)
-                    if(floorTextPlane) {
-                        floorTextPlane.material.opacity = 0.5;
-                        floorTextPlane.material.needsUpdate = true;
-                    }
+                    if(floorMesh) { floorMesh.material.transparent = true; floorMesh.material.opacity = 0; floorMesh.material.needsUpdate = true; }
+                    if(userImagePlane) { userImagePlane.material.opacity = 0.3; userImagePlane.material.needsUpdate = true; }
+                    if(floorTextPlane) { floorTextPlane.material.opacity = 0.5; floorTextPlane.material.needsUpdate = true; }
 
                 } catch (err) {
                     showToast("無法開啟相機", "請檢查權限或重新整理");
@@ -803,18 +819,13 @@
             }
         }
 
-        // === 新增：自訂提示框函式 ===
         function showToast(title, msg) {
             const toast = document.getElementById('custom-toast');
             document.getElementById('toast-title').innerText = title;
-            document.getElementById('toast-msg').innerHTML = msg; // 允許 HTML 換行
-            
+            document.getElementById('toast-msg').innerHTML = msg; 
             toast.style.opacity = 1;
-            
             if (toastTimer) clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
-                toast.style.opacity = 0;
-            }, 2500); // 2.5秒後消失
+            toastTimer = setTimeout(() => { toast.style.opacity = 0; }, 2500); 
         }
 
         function initUI() {
@@ -834,18 +845,22 @@
 
             document.getElementById('input-gps').addEventListener('change', (e) => { toggleGPS(e.target.checked); });
 
+            // 監聽「連續聖杯」開關
+            document.getElementById('input-streak-mode').addEventListener('change', (e) => {
+                userData.useStreak = e.target.checked;
+                streakCount = 0;
+                updateStreakDots();
+            });
+
             document.getElementById('btn-save').addEventListener('click', () => {
                 initAudio(); 
                 
-                // === 檢查生日輸入格式 ===
                 const bdayInput = document.getElementById('input-bday');
                 const bdayVal = bdayInput.value.trim();
 
-                // 只有當使用者「有輸入」且「格式錯誤」時才警告
                 if (bdayVal && !/^\d{8}$/.test(bdayVal)) {
-                    // 使用自訂 Toast 取代 alert
-                    showToast("日期格式錯誤", "請輸入 8 位數字<br>例如：20080825");
-                    return; // 阻止繼續執行
+                    showToast("日期格式錯誤", "請輸入 8 位數字<br>例如：20000101");
+                    return; 
                 }
                 
                 userData.bday = bdayVal; 
@@ -985,10 +1000,40 @@
             
             const sL = getSide(meshLeft); const sR = getSide(meshRight);
             let title = "", desc = "", color = "";
+            let isShengJiao = false;
+
             if (sL === 2 || sR === 2) { title = "立筊"; desc = "【太鬼了】系統異常，偵測到稀有變數！"; color = "#ff00ff"; }
             else if (sL === 1 && sR === 1) { title = "笑筊"; desc = "【要確欸？】是不是沒想清楚？再一次。"; color = "#e0e0e0"; }
             else if (sL === 0 && sR === 0) { title = "陰筊"; desc = "【先不要】感覺不太對，頻率沒對上。"; color = "#aaaaaa"; }
-            else { title = "聖筊"; desc = "【歐氣爆發】不用懷疑，這波穩了！"; color = "#ff3333"; }
+            else { 
+                // 這次是聖筊
+                title = "聖筊"; 
+                desc = "【歐氣爆發】不用懷疑，這波穩了！"; 
+                color = "#ff3333"; 
+                isShengJiao = true;
+            }
+
+            // === 連續聖杯邏輯 ===
+            if (userData.useStreak) {
+                if (isShengJiao) {
+                    streakCount++;
+                    // 如果達成三次
+                    if (streakCount >= 3) {
+                        // 介面依然顯示「聖筊」，但額外觸發大字特效
+                        showStreakOverlay();
+                        
+                        // 強力震動
+                        if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 300]);
+                        
+                        // 歸零計數 (顯示歸零會在 showStreakOverlay 的 setTimeout 中執行)
+                        streakCount = 0;
+                    }
+                } else {
+                    // 中斷，歸零
+                    streakCount = 0;
+                }
+                updateStreakDots();
+            }
             
             const rt = document.getElementById('res-text'); const rd = document.getElementById('res-desc');
             if(rt && rd) {
