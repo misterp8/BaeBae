@@ -21,6 +21,26 @@
             user-select: none;
         }
 
+        /* Camera Feed (置於最底層) */
+        #camera-feed {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            display: none; /* 預設隱藏 */
+            transform: scaleX(1); /* 後鏡頭不需要鏡像翻轉 */
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5; /* 在相機之上 */
+        }
+
         #ui-layer {
             position: absolute;
             top: 0;
@@ -66,13 +86,8 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Injection Overlay */
@@ -102,21 +117,13 @@
         }
 
         @keyframes breathe {
-            0% {
-                opacity: 0.6;
-                transform: scale(0.98);
-            }
-
-            100% {
-                opacity: 1;
-                transform: scale(1.02);
-            }
+            0% { opacity: 0.6; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1.02); }
         }
 
-        /* Settings Button */
-        #btn-settings {
+        /* === 按鈕樣式共用 === */
+        .icon-btn {
             position: absolute;
-            top: max(20px, env(safe-area-inset-top));
             right: 20px;
             width: 44px;
             height: 44px;
@@ -133,6 +140,21 @@
             justify-content: center;
             align-items: center;
             padding-bottom: 2px;
+            transition: background 0.3s;
+        }
+        .icon-btn:active {
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        /* Settings Button */
+        #btn-settings {
+            top: max(20px, env(safe-area-inset-top));
+        }
+
+        /* Camera Button (新功能) */
+        #btn-camera {
+            /* 位於設定按鈕下方，保留間距 */
+            top: calc(max(20px, env(safe-area-inset-top)) + 60px);
         }
 
         /* Result Display */
@@ -179,17 +201,9 @@
         }
 
         @keyframes pulse {
-            0% {
-                opacity: 0.3;
-            }
-
-            50% {
-                opacity: 0.8;
-            }
-
-            100% {
-                opacity: 0.3;
-            }
+            0% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.3; }
         }
 
         /* Settings Modal */
@@ -209,7 +223,6 @@
         }
 
         .modal-content {
-            /* 加上 position: relative 讓 X 按鈕可以定位 */
             position: relative; 
             background: linear-gradient(135deg, #2a0a0a, #1a0505);
             border: 1px solid #d94e41;
@@ -237,139 +250,53 @@
             font-weight: bold;
             padding: 5px;
         }
-        #btn-close-settings:active {
-            color: #fff;
-            transform: scale(0.9);
+        #btn-close-settings:active { color: #fff; transform: scale(0.9); }
+
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 13px; color: #aaa; margin-bottom: 5px; }
+
+        input[type="date"], input[type="text"] {
+            width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #555; color: white; border-radius: 8px; box-sizing: border-box; font-size: 16px;
         }
 
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 13px;
-            color: #aaa;
-            margin-bottom: 5px;
-        }
-
-        input[type="date"],
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #555;
-            color: white;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        /* Toggle Switch */
         .toggle-group {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #555;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 15px; background: rgba(255, 255, 255, 0.05);
+            padding: 10px; border-radius: 8px; border: 1px solid #555;
         }
+        .toggle-group label { margin: 0; color: #d4af37; font-size: 16px; font-weight: bold; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: #d94e41; cursor: pointer; }
 
-        .toggle-group label {
-            margin: 0;
-            color: #d4af37;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: #d94e41;
-            cursor: pointer;
-        }
-
-        /* File Upload */
         .file-upload-btn {
-            display: inline-block;
-            width: 100%;
-            padding: 12px 0;
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px dashed #ffd700;
-            color: #ffd700;
-            text-align: center;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-            box-sizing: border-box;
+            display: inline-block; width: 100%; padding: 12px 0;
+            background: rgba(255, 215, 0, 0.1); border: 1px dashed #ffd700;
+            color: #ffd700; text-align: center; border-radius: 8px; cursor: pointer;
+            font-size: 14px; transition: all 0.3s; box-sizing: border-box;
         }
+        .file-upload-btn:hover { background: rgba(255, 215, 0, 0.2); }
+        input[type="file"] { display: none; }
 
-        .file-upload-btn:hover {
-            background: rgba(255, 215, 0, 0.2);
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        /* Description */
         .system-desc {
-            font-size: 12px;
-            color: #888;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            line-height: 1.5;
-            text-align: center;
+            font-size: 12px; color: #888; margin-top: 10px; margin-bottom: 5px;
+            line-height: 1.5; text-align: center;
         }
 
-        /* Button */
         button.confirm {
-            background: #d94e41;
-            color: white;
-            border: none;
-            padding: 12px 0;
-            border-radius: 25px;
-            margin-top: 10px;
-            width: 100%;
-            font-size: 18px;
-            font-weight: 900;
-            cursor: pointer;
+            background: #d94e41; color: white; border: none; padding: 12px 0;
+            border-radius: 25px; margin-top: 10px; width: 100%;
+            font-size: 18px; font-weight: 900; cursor: pointer;
             box-shadow: 0 4px 15px rgba(217, 78, 65, 0.6);
-            position: relative;
-            overflow: hidden;
-            letter-spacing: 2px;
+            position: relative; overflow: hidden; letter-spacing: 2px;
         }
-
-        button.confirm:active {
-            transform: scale(0.98);
-        }
-
+        button.confirm:active { transform: scale(0.98); }
         button.confirm::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
             animation: shine 3s infinite;
         }
-
         @keyframes shine {
-            0% {
-                left: -100%;
-            }
-
-            20% {
-                left: 100%;
-            }
-
-            100% {
-                left: 100%;
-            }
+            0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; }
         }
     </style>
 
@@ -385,6 +312,8 @@
 </head>
 
 <body>
+    <video id="camera-feed" autoplay playsinline muted></video>
+
     <div id="loading-overlay">
         <div class="loading-text">誠心祈求</div>
         <div class="loading-spinner"></div>
@@ -396,7 +325,9 @@
 
     <div id="canvas-container"></div>
     <div id="ui-layer">
-        <div id="btn-settings">⚙</div>
+        <div id="btn-settings" class="icon-btn">⚙</div>
+        <div id="btn-camera" class="icon-btn">👁️</div>
+
         <div id="result-display">
             <div class="result-title" id="res-text"></div>
             <div class="result-desc" id="res-desc"></div>
@@ -407,9 +338,7 @@
     <div id="settings-modal">
         <div class="modal-content">
             <div id="btn-close-settings">×</div>
-
-            <h3 style="margin-top:0; border-bottom:1px solid #d94e41; padding-bottom:10px; text-align:center;">本命杯杯
-                BaeBae</h3>
+            <h3 style="margin-top:0; border-bottom:1px solid #d94e41; padding-bottom:10px; text-align:center;">本命杯杯 BaeBae</h3>
 
             <div class="toggle-group">
                 <label for="input-gps">開啟靈氣定位 (GPS)</label>
@@ -458,14 +387,13 @@
         let currentState = GAME_STATE.READY;
         let scene, camera, renderer, world, eventQueue;
         let moonLeft, moonRight, meshLeft, meshRight;
-        let floorTextPlane, userImagePlane, fireLight;
+        let floorTextPlane, userImagePlane, fireLight, floorMesh; // 新增 floorMesh 參考
         let userData = { bday: "", floorText: "", useGPS: false };
         let audioCtx = null, safetyTimer = null, dampingTimer = null, physicsReady = false;
         let localUpAxis = new THREE.Vector3(0, 1, 0);
         let stableFrames = 0; 
         const REQUIRED_STABLE_FRAMES = 50; 
         
-        // 時間同步變數
         const clock = new THREE.Clock(); 
         let physicsAccumulator = 0;
         const PHYSICS_STEP = 1 / 60; 
@@ -474,9 +402,13 @@
         let userLocation = { lat: 25.03, lng: 121.56 };
         let fateEngine;
 
+        // 相機變數
+        let isCameraActive = false;
+        let cameraStream = null;
+        let currentBgColor = new THREE.Color(0x1a0505); // 記錄當前背景顏色
+
         class FateEngine {
             constructor() { this.PHI = 1.6180339887; }
-
             hashString(str) {
                 if (!str) return 0.5;
                 let hash = 0;
@@ -487,7 +419,6 @@
                 }
                 return 0.1 + (Math.abs(hash) % 800) / 1000;
             }
-
             getMoonPhase() {
                 const date = new Date();
                 let year = date.getFullYear(); let month = date.getMonth() + 1; const day = date.getDate();
@@ -496,19 +427,14 @@
                 let jd = c + e + day - 694039.09; jd /= 29.5305882;
                 const b = parseInt(jd); jd -= b; return jd;
             }
-
             computeChaos(seed, iterations) {
                 let x = seed;
                 let r = 3.6;
-                if (userData.useGPS) {
-                    r += (Math.abs(userLocation.lat) % 0.4);
-                } else {
-                    r += (Date.now() % 400) / 1000;
-                }
+                if (userData.useGPS) { r += (Math.abs(userLocation.lat) % 0.4); } 
+                else { r += (Date.now() % 400) / 1000; }
                 for (let i = 0; i < iterations; i++) x = r * x * (1 - x);
                 return x;
             }
-
             calculatePhysicsParameters(bday, lat, lng) {
                 const now = new Date();
                 const timestamp = now.getTime();
@@ -518,11 +444,8 @@
                 const moonEnergy = 1.0 - Math.abs(moonPhase - 0.5) * 2;
 
                 let geoFlux = 0;
-                if (userData.useGPS) {
-                    geoFlux = (Math.abs(lat * lng) * 1000) % 1;
-                } else {
-                    geoFlux = (Math.sin(timestamp * 0.001) + 1) * 0.5;
-                }
+                if (userData.useGPS) { geoFlux = (Math.abs(lat * lng) * 1000) % 1; } 
+                else { geoFlux = (Math.sin(timestamp * 0.001) + 1) * 0.5; }
 
                 const digitalSpirit = Math.random();
                 const iterations = 10 + Math.floor(userVal * 50);
@@ -530,7 +453,6 @@
                 if (seed <= 0 || seed >= 1) seed = 0.5;
 
                 const chaosResult = this.computeChaos(seed, iterations);
-
                 const baseForce = 0.14;
                 const forceVariation = (chaosResult - 0.5) * 0.05;
                 const moonPull = moonEnergy * 0.02;
@@ -629,11 +551,17 @@
 
         function initScene() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1a0505); scene.fog = new THREE.Fog(0x1a0505, 10, 50);
+            // 注意：為了支援相機透視，renderer 開啟 alpha: true
+            scene.background = currentBgColor; 
+            scene.fog = new THREE.Fog(0x1a0505, 10, 50);
+
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
             camera.position.set(0, 16, 0); camera.lookAt(0, 2, 0);
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
-            renderer.setSize(window.innerWidth, window.innerHeight); renderer.shadowMap.enabled = true;
+            
+            // 重要：alpha: true 允許 Canvas 透明，這樣才看得到背後的 video
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight); 
+            renderer.shadowMap.enabled = true;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.5));
@@ -643,9 +571,16 @@
             fireLight = new THREE.PointLight(0xff7733, 8.0, 60);
             fireLight.position.set(0, 2, 0); scene.add(fireLight);
 
-            const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x220a0a, roughness: 0.5, metalness: 0.1 });
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), floorMaterial);
-            floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+            // 地板 (存到變數以便控制透明度)
+            const floorMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x220a0a, 
+                roughness: 0.5, 
+                metalness: 0.1,
+                transparent: false,
+                opacity: 1.0 
+            });
+            floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), floorMaterial);
+            floorMesh.rotation.x = -Math.PI / 2; floorMesh.receiveShadow = true; scene.add(floorMesh);
 
             const imgGeo = new THREE.PlaneGeometry(1, 1);
             const imgMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, transparent: true, opacity: 1.0, roughness: 0.9, metalness: 0.0 });
@@ -689,12 +624,22 @@
         }
 
         function updateUserImage(url) {
-            if (!url) { userImagePlane.visible = false; return; }
+            if (!url) { 
+                userImagePlane.visible = false; 
+                // 如果移除圖片，恢復預設背景色
+                if(!isCameraActive) scene.background = new THREE.Color(0x1a0505);
+                currentBgColor = new THREE.Color(0x1a0505);
+                return; 
+            }
             new THREE.TextureLoader().load(url, (t) => {
                 t.colorSpace = THREE.SRGBColorSpace; const aspect = t.image.width / t.image.height; const h = 8 / aspect;
                 userImagePlane.geometry.dispose(); userImagePlane.geometry = new THREE.PlaneGeometry(8, h); userImagePlane.material.map = t; userImagePlane.material.needsUpdate = true;
                 userImagePlane.position.z = -7.0 + (h / 2);
                 userImagePlane.visible = true; document.getElementById('file-label').innerText = "圖片已載入";
+                
+                // 背景換成該圖片 (如果不開天眼)
+                // 但為了保持介面一致，我們這裡只把圖放在地上，背景保持黑 (或者你可以選擇把這張圖設為 scene.background)
+                // 這裡保持原設計：只顯示在地板上的 Plane，背景維持黑色
             });
         }
 
@@ -739,12 +684,67 @@
             g.gain.setValueAtTime(Math.min(v * 0.5, 1.0), t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.15); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.15);
         }
 
+        // === 新增：相機控制函式 ===
+        async function toggleCamera() {
+            const videoElement = document.getElementById('camera-feed');
+            
+            if (isCameraActive) {
+                // 關閉相機
+                isCameraActive = false;
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                    cameraStream = null;
+                }
+                videoElement.style.display = 'none';
+                
+                // 還原背景
+                scene.background = currentBgColor;
+                
+                // 還原地板不透明度
+                if(floorMesh) {
+                    floorMesh.material.transparent = false;
+                    floorMesh.material.opacity = 1.0;
+                    floorMesh.material.needsUpdate = true;
+                }
+
+            } else {
+                // 開啟相機
+                try {
+                    cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment' } 
+                    });
+                    videoElement.srcObject = cameraStream;
+                    videoElement.style.display = 'block';
+                    isCameraActive = true;
+
+                    // 將 Three.js 背景設為透明，讓底層 Video 顯示出來
+                    scene.background = null;
+
+                    // 將地板設為半透明，讓使用者可以看到桌上的東西
+                    if(floorMesh) {
+                        floorMesh.material.transparent = true;
+                        floorMesh.material.opacity = 0.3; // 30% 不透明度
+                        floorMesh.material.needsUpdate = true;
+                    }
+
+                } catch (err) {
+                    alert("無法開啟相機權限：" + err.message);
+                    console.error(err);
+                }
+            }
+        }
+
         function initUI() {
             document.getElementById('btn-settings').addEventListener('click', () => document.getElementById('settings-modal').style.display = 'flex');
             
-            // 新增：關閉按鈕監聽
             document.getElementById('btn-close-settings').addEventListener('click', () => {
                 document.getElementById('settings-modal').style.display = 'none';
+            });
+
+            // 天眼按鈕監聽
+            document.getElementById('btn-camera').addEventListener('click', () => {
+                initAudio(); // 點擊按鈕順便解鎖音效
+                toggleCamera();
             });
 
             const fi = document.getElementById('input-bg-file');
@@ -767,7 +767,7 @@
                 }, 1500);
             });
 
-            document.addEventListener('pointerup', (e) => { if (e.target.closest('#btn-settings') || e.target.closest('#settings-modal')) return; initAudio(); handleInteraction(); });
+            document.addEventListener('pointerup', (e) => { if (e.target.closest('#btn-settings') || e.target.closest('#settings-modal') || e.target.closest('#btn-camera')) return; initAudio(); handleInteraction(); });
         }
         function initShakeDetection() {
             if (!window.DeviceMotionEvent) return; let lastTime = 0;
