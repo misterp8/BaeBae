@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>本命杯杯 BaeBae</title>
+    <meta name="theme-color" content="#1a0505">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="stylesheet" href="style.css">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+            "@dimforge/rapier3d-compat": "https://unpkg.com/@dimforge/rapier3d-compat@0.11.2/rapier.es.js"
+        }
+    }
+    </script>
+</head>
+
+<body>
+    <div id="landscape-warning">
+        <div class="phone-icon"></div>
+        <div class="warning-text">請將手機轉為直式使用</div>
+    </div>
+
+    <video id="camera-feed" autoplay playsinline muted></video>
+
+    <div id="custom-toast">
+        <div class="toast-title" id="toast-title">提示</div>
+        <div class="toast-msg" id="toast-msg">訊息內容</div>
+    </div>
+
+    <div id="streak-overlay">三聖筊</div>
+
+    <div id="loading-overlay">
+        <div class="loading-text">誠心祈求</div>
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div id="injection-overlay">
+        <div class="injection-text">天機演算系統運作中...</div>
+    </div>
+
+    <div id="canvas-container"></div>
+    <div id="ui-layer">
+        <div id="streak-container">
+            <div class="streak-dot" id="dot-1"></div>
+            <div class="streak-dot" id="dot-2"></div>
+            <div class="streak-dot" id="dot-3"></div>
+        </div>
+
+        <div id="btn-settings" class="icon-btn">⚙</div>
+        <div id="btn-camera" class="icon-btn">👁️</div>
+
+        <div id="result-display">
+            <div class="result-title" id="res-text"></div>
+            <div class="result-desc" id="res-desc"></div>
+        </div>
+        <div id="instruction"></div>
+    </div>
+
+    <div id="settings-modal">
+        <div class="modal-content">
+            <div id="btn-close-settings">×</div>
+            <h3 style="margin-top:0; border-bottom:1px solid #d94e41; padding-bottom:10px; text-align:center;">本命杯杯
+                BaeBae</h3>
+
+            <div class="toggle-group">
+                <label for="input-divination-mode">問事模式</label>
+                <input type="checkbox" id="input-divination-mode">
+            </div>
+
+            <div class="toggle-group">
+                <label for="input-streak-mode">開啟連續三次聖杯模式</label>
+                <input type="checkbox" id="input-streak-mode">
+            </div>
+
+            <div class="toggle-group">
+                <label for="input-gps">開啟靈氣定位 (GPS)</label>
+                <input type="checkbox" id="input-gps">
+            </div>
+
+            <div class="input-group">
+                <label>你的出生日期 (西元年月日)</label>
+                <input type="tel" id="input-bday" placeholder="例如：20080825" maxlength="8">
+            </div>
+
+            <div class="input-group">
+                <label>想問裡面有沒有 (逗號換行)</label>
+                <input type="text" id="input-floor-text" placeholder="例如：員瑛的小卡,Bae的小卡">
+            </div>
+
+            <div class="input-group">
+                <label>背景圖片</label>
+                <label for="input-bg-file" class="file-upload-btn" id="file-label">
+                    + 選擇圖片 (支援 JPG/PNG)
+                </label>
+                <input type="file" id="input-bg-file" accept="image/*">
+            </div>
+
+            <div class="system-desc">
+                本系統搭載「三元九運混沌引擎」，<br>
+                結合您的天時(擲筊時間)、地利(GPS)與人和(生日)，<br>
+                方能生成專屬於您的真實物理參數。
+            </div>
+
+            <button class="confirm" id="btn-save">注入靈力</button>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
