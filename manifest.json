@@ -4,8 +4,8 @@
   "description": "搭載三元九運混沌引擎，結合 GPS 與生辰的真實物理擲筊系統，為你的本命注入靈力。",
   "start_url": "./index.html",
   "display": "fullscreen", 
-  "background_color": "#1a0505",
-  "theme_color": "#1a0505",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait",
   "icons": [
     {
