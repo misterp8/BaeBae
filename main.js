@@ -350,7 +350,7 @@ function playWoodSound(v) {
     if (!audioCtx || v < 0.2) return;
     const t = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
     o.type = 'triangle'; o.frequency.setValueAtTime(150 + Math.random() * 50, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.1);
-    g.gain.setValueAtTime(Math.min(v * 0.8, 1.0), t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.15); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.15);
+    g.gain.setValueAtTime(Math.min(v * 1.0, 1.0), t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.15); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.15);
 }
 
 async function toggleCamera() {
