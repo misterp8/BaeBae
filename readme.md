@@ -92,14 +92,12 @@ $$
 **歡迎請我喝杯咖啡☕，讓系統繼續運轉。**
 
 <a href="https://buymeacoffee.com/mister.p" target="_blank">
-  <img src="./coffee.png" alt="Buy Me A Coffee" style="height: 500px !important;width: 500px !important;" >
+  <img src="./coffee.png" alt="Buy Me A Coffee" style="height: 180px !important;width: 180px !important;" >
 </a>
-<a href="https://buymeacoffee.com/mister.p" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
-</a>
+
 ---
 
 <p align="center">
  Made with ❤️❤️❤️ by Mister P
-
 </p>
+
