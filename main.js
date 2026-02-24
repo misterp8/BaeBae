@@ -44,6 +44,10 @@ let currentBgColor = new THREE.Color(0x1a0505);
 let toastTimer = null;
 let streakCount = 0;
 
+// === 新增：搖晃授權相關變數 ===
+let isShakeEventAdded = false;
+let shakeHandler = null;
+
 class FateEngine {
     constructor() { this.PHI = 1.6180339887; }
     hashString(str) {
@@ -398,6 +402,20 @@ function showToast(title, msg) {
     toastTimer = setTimeout(() => { toast.style.opacity = 0; }, 2500);
 }
 
+function requestMotionPermission() {
+    if (isShakeEventAdded) return; 
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === 'granted') {
+                    window.addEventListener('devicemotion', shakeHandler);
+                    isShakeEventAdded = true;
+                }
+            })
+            .catch(console.error); 
+    }
+}
+
 function initUI() {
     document.getElementById('btn-settings').addEventListener('click', () => document.getElementById('settings-modal').style.display = 'flex');
 
@@ -427,6 +445,7 @@ function initUI() {
 
     document.getElementById('btn-save').addEventListener('click', () => {
         initAudio();
+        requestMotionPermission();
 
         const bdayInput = document.getElementById('input-bday');
         const bdayVal = bdayInput.value.trim();
@@ -442,6 +461,7 @@ function initUI() {
         if (fi.files && fi.files[0]) { const r = new FileReader(); r.onload = (e) => updateUserImage(e.target.result); r.readAsDataURL(fi.files[0]); }
 
         document.getElementById('settings-modal').style.display = 'none';
+        resetToReadyState();
         const overlay = document.getElementById('injection-overlay');
         overlay.style.display = 'flex';
         setTimeout(() => {
@@ -455,16 +475,33 @@ function initUI() {
 
         if (e.target.closest('#btn-settings') || e.target.closest('#settings-modal') || e.target.closest('#btn-camera')) return;
         initAudio();
+        requestMotionPermission();
         handleInteraction();
     });
 }
+
 function initShakeDetection() {
-    if (!window.DeviceMotionEvent) return; let lastTime = 0;
-    window.addEventListener('devicemotion', (e) => {
+    if (!window.DeviceMotionEvent) return; 
+    let lastTime = 0;
+    
+    shakeHandler = (e) => {
         if (window.innerWidth > window.innerHeight) return;
-        if (currentState !== GAME_STATE.READY) return; const acc = e.accelerationIncludingGravity; if (!acc) return;
-        if ((Math.abs(acc.x) > 15 || Math.abs(acc.y) > 15 || Math.abs(acc.z) > 15)) { if (Date.now() - lastTime > 1000) { lastTime = Date.now(); initAudio(); handleInteraction(); } }
-    });
+        if (currentState !== GAME_STATE.READY) return; 
+        const acc = e.accelerationIncludingGravity; 
+        if (!acc) return;
+        if ((Math.abs(acc.x) > 15 || Math.abs(acc.y) > 15 || Math.abs(acc.z) > 15)) { 
+            if (Date.now() - lastTime > 1000) { 
+                lastTime = Date.now(); 
+                initAudio(); 
+                handleInteraction(); 
+            } 
+        }
+    };
+
+    if (typeof DeviceMotionEvent.requestPermission !== 'function') {
+        window.addEventListener('devicemotion', shakeHandler);
+        isShakeEventAdded = true;
+    }
 }
 
 function handleInteraction() { if (currentState === GAME_STATE.READY) startToss(); else if (currentState === GAME_STATE.RESULT) resetToReadyState(); }
