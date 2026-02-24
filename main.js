@@ -281,7 +281,7 @@ function setupMoonBlocks(gltf) {
     });
 
     const bumpTexture = createWoodBumpMap();
-    const ancientMaterial = new THREE.MeshStandardMaterial({ color: 0x700707, roughness: 0.8, bumpMap: bumpTexture, bumpScale: 5.0, metalness: 0.3 });
+    const ancientMaterial = new THREE.MeshStandardMaterial({ color: 0xbb0000, roughness: 0.3, bumpMap: bumpTexture, bumpScale: 3.0, metalness: 0.1, flatShading: false });
 
     const createBlock = (config, isLeft) => {
         const mesh = model.clone(); mesh.material = ancientMaterial; scene.add(mesh); if (isLeft) meshLeft = mesh; else meshRight = mesh;
