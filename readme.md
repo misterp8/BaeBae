@@ -101,7 +101,7 @@ $$
 
 ---
 
-## 支持開發者 (Support the Oracle)
+## 支持 (Support)
 
 如果這個系統幫助你抽中了小卡，搶到了演唱會門票，或是你的本命真的回應了你...<br>
 **歡迎請我喝杯咖啡☕，讓系統繼續運轉。**
@@ -109,5 +109,6 @@ $$
 <a href="https://buymeacoffee.com/mister.p" target="_blank">
   <img src="./coffee.png" alt="Buy Me A Coffee" style="height: 180px !important;width: 180px !important;" >
 </a>
+
 
 
