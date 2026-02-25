@@ -12,7 +12,7 @@
   <img src="./icon512.png" width="180" alt="BaeBae" style="border-radius: 20px; box-shadow: 0 0 20px rgba(255, 68, 0, 0.5);">
 </p>
 
-## 簡介 (Introduction)
+## 簡介
 
 **本命杯杯** 是一款專為追星族（以及所有迷惘的靈魂）打造的 **PWA 3D 擲筊應用**。<br>
 如果你有用過其他擲筊 App，你大概知道結果怎麼來的：<br>
@@ -30,7 +30,7 @@
 
 ---
 
-## 安裝至手機 (PWA Installation)
+## 安裝至手機
 
 本程式採用 **PWA (Progressive Web App)** 技術，**強烈建議** 將其安裝至手機主畫面，以獲得 **全螢幕、無網址列、如同原生 App** 的沈浸式體驗。
 
@@ -92,7 +92,7 @@ $$
 
 ---
 
-## 核心功能 (Key Features)
+## 核心功能 
 
 * **真實物理模擬**：搭載 **Rapier 3D** 物理引擎，計算摩擦力、彈性係數與空氣阻力。
 * **實時光影質感**：Three.js 打造的真實光影，每一擲都充滿神聖感。
@@ -101,7 +101,7 @@ $$
 
 ---
 
-## 支持 (Support)
+## 支持
 
 如果這個系統幫助你抽中了小卡，搶到了演唱會門票，或是你的本命真的回應了你...<br>
 **歡迎請我喝杯咖啡☕，讓系統繼續運轉。**
@@ -109,6 +109,7 @@ $$
 <a href="https://buymeacoffee.com/mister.p" target="_blank">
   <img src="./coffee.png" alt="Buy Me A Coffee" style="height: 180px !important;width: 180px !important;" >
 </a>
+
 
 
 
