@@ -110,10 +110,4 @@ $$
   <img src="./coffee.png" alt="Buy Me A Coffee" style="height: 180px !important;width: 180px !important;" >
 </a>
 
----
-
-<p align="center">
- Made with ❤️❤️❤️ by Mister P
-</p>
-
 
